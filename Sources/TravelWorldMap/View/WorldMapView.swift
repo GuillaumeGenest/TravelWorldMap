@@ -37,7 +37,7 @@ public struct WorldMapView: View {
         strokeWidth: CGFloat = 0.5,
         maxPointsPerPolygon: Int = 200,
         enableRegionOptimization: Bool = true,
-        interactionModes: MapInteractionModes = [.pan, .zoom],
+        interactionModes: MapInteractionModes = [.pan],
         initialRegion: MKCoordinateRegion? = nil
     ) {
         self.visitedCountryCodes = Set(visitedCountryCodes.map { $0.uppercased() })
@@ -49,7 +49,6 @@ public struct WorldMapView: View {
         self.enableRegionOptimization = enableRegionOptimization
         self.interactionModes = interactionModes
         
-        // Région par défaut : Europe
         let region = initialRegion ?? MKCoordinateRegion(
             center: CLLocationCoordinate2D(latitude: 48.858370, longitude: 2.294481),
             latitudinalMeters: 8000000,
@@ -59,7 +58,6 @@ public struct WorldMapView: View {
         self._position = State(initialValue: .region(region))
     }
     
-    /// Initialisation avec noms de pays
     public init(
         visitedCountryNames: Set<String>,
         visitedColor: Color = .blue,
@@ -68,7 +66,7 @@ public struct WorldMapView: View {
         strokeWidth: CGFloat = 0.5,
         maxPointsPerPolygon: Int = 200,
         enableRegionOptimization: Bool = true,
-        interactionModes: MapInteractionModes = [.pan, .zoom],
+        interactionModes: MapInteractionModes = [.pan],
         initialRegion: MKCoordinateRegion? = nil
     ) {
         let loader = CountryDataLoader.shared
@@ -85,7 +83,6 @@ public struct WorldMapView: View {
         self.enableRegionOptimization = enableRegionOptimization
         self.interactionModes = interactionModes
         
-        // Région par défaut : Europe
         let region = initialRegion ?? MKCoordinateRegion(
             center: CLLocationCoordinate2D(latitude: 48.858370, longitude: 2.294481),
             latitudinalMeters: 8000000,
@@ -95,7 +92,6 @@ public struct WorldMapView: View {
         self._position = State(initialValue: .region(region))
     }
     
-    /// Initialisation sans pays visités (toute la carte grise)
     public init(
         visitedColor: Color = .blue,
         unvisitedColor: Color = .gray,
@@ -115,7 +111,6 @@ public struct WorldMapView: View {
         self.enableRegionOptimization = enableRegionOptimization
         self.interactionModes = interactionModes
         
-        // Région par défaut : Europe
         let region = initialRegion ?? MKCoordinateRegion(
             center: CLLocationCoordinate2D(latitude: 48.858370, longitude: 2.294481),
             latitudinalMeters: 8000000,
@@ -182,8 +177,7 @@ public struct WorldMapView: View {
             visibleCountries = allCountries
             return
         }
-        
-        // ✅ Filtrer par polygon visible dans la région
+    
         visibleCountries = allCountries.compactMap { country in
             let visiblePolygonIndices = country.getVisiblePolygonIndices(in: region)
             
@@ -194,8 +188,7 @@ public struct WorldMapView: View {
             return country.withFilteredPolygons(visiblePolygonIndices)
         }
     }
-    
-    /// Simplifie un polygon en gardant maximum N points
+
     private func simplifyPolygon(_ coords: [CLLocationCoordinate2D], maxPoints: Int) -> [CLLocationCoordinate2D] {
         guard coords.count > maxPoints else { return coords }
         
@@ -206,7 +199,6 @@ public struct WorldMapView: View {
             result.append(coords[i])
         }
         
-        // Toujours inclure le dernier point pour fermer le polygon
         if let last = coords.last, let resultLast = result.last {
             if last.latitude != resultLast.latitude || last.longitude != resultLast.longitude {
                 result.append(last)
@@ -216,7 +208,6 @@ public struct WorldMapView: View {
         return result
     }
     
-    /// Stats d'optimisation (DEBUG uniquement)
     private func printOptimizationStats(_ countries: [Country]) {
         let totalPolygons = countries.reduce(0) { $0 + $1.polygons.count }
         let totalPoints = countries.reduce(0) { total, country in
