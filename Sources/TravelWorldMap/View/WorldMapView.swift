@@ -103,7 +103,7 @@ public struct WorldMapView: View {
         strokeWidth: CGFloat = 0.5,
         maxPointsPerPolygon: Int = 200,
         enableRegionOptimization: Bool = true,
-        interactionModes: MapInteractionModes = [.pan, .zoom],
+        interactionModes: MapInteractionModes = [.pan],
         initialRegion: MKCoordinateRegion? = nil
     ) {
         self.visitedCountryCodes = []
@@ -165,9 +165,9 @@ public struct WorldMapView: View {
         allCountries = countries
         updateVisibleCountries()
         
-        #if DEBUG
-        printOptimizationStats(countries)
-        #endif
+//        #if DEBUG
+//        printOptimizationStats(countries)
+//        #endif
     }
     
     private func updateVisibleCountries() {
@@ -320,40 +320,6 @@ extension MKCoordinateRegion {
     )
 }
 
-// MARK: - Extension Country
-
-extension Country {
-    /// Trouve les indices des polygons visibles dans une région
-    func getVisiblePolygonIndices(in region: MKCoordinateRegion) -> [Int] {
-        let minLat = region.center.latitude - region.span.latitudeDelta / 2
-        let maxLat = region.center.latitude + region.span.latitudeDelta / 2
-        let minLon = region.center.longitude - region.span.longitudeDelta / 2
-        let maxLon = region.center.longitude + region.span.longitudeDelta / 2
-        
-        return polygons.indices.filter { index in
-            let polygon = polygons[index]
-            
-            // Vérifier si au moins un point est dans la région
-            return polygon.contains { coord in
-                coord.latitude >= minLat &&
-                coord.latitude <= maxLat &&
-                coord.longitude >= minLon &&
-                coord.longitude <= maxLon
-            }
-        }
-    }
-    
-    /// Crée une copie du pays avec seulement certains polygons
-    func withFilteredPolygons(_ indices: [Int]) -> Country {
-        let filteredCoordinates = indices.map { coordinates[$0] }
-        return Country(
-            id: self.id,
-            name: self.name,
-            isoA3: self.isoA3,
-            coordinates: filteredCoordinates
-        )
-    }
-}
 
 // MARK: - Previews
 

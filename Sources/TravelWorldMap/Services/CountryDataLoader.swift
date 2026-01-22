@@ -17,52 +17,55 @@ public final class CountryDataLoader: @unchecked Sendable {
     }
     
     private func loadCountries() {
-        guard let url = Bundle.module.url(forResource: "countries", withExtension: "geojson") else {
-            print("❌ Fichier countries.geojson non trouvé dans Resources")
-            return
-        }
-        
-        do {
-            let data = try Data(contentsOf: url)
-            let decoder = JSONDecoder()
-            let geoJSON = try decoder.decode(GeoJSONFeatureCollection.self, from: data)
+            guard let url = Bundle.main.url(forResource: "countries", withExtension: "geojson") else {
+                print("❌ Fichier countries.geojson non trouvé dans le bundle principal")
+                return
+            }
             
-            countries = geoJSON.features.compactMap { feature -> Country? in
-                // Utiliser les nouvelles clés du JSON
-                guard let isoA2 = feature.properties.isoA2,
-                      let name = feature.properties.name,
-                      let isoA3 = feature.properties.isoA3,
-                      !isoA2.isEmpty else {
-                    return nil
-                }
+            do {
+                let data = try Data(contentsOf: url)
+                let decoder = JSONDecoder()
+                let geoJSON = try decoder.decode(GeoJSONFeatureCollection.self, from: data)
                 
-                return Country(
-                    id: isoA2,
-                    name: name,
-                    isoA3: isoA3,
-                    coordinates: feature.geometry.coordinates
-                )
-            }
-            
-            // Tri par nom pour faciliter la recherche
-            countries.sort { $0.name < $1.name }
-            
-            print("✅ \(countries.count) pays chargés avec succès")
-            
-            // Debug : afficher quelques exemples
-            if let chile = countries.first(where: { $0.id == "CL" }) {
-                print("🇨🇱 Chile : \(chile.polygonCount) polygone(s)")
-            }
-            if let france = countries.first(where: { $0.id == "FR" }) {
-                print("🇫🇷 France : \(france.polygonCount) polygone(s)")
-            }
-        } catch {
-            print("❌ Erreur de chargement du GeoJSON: \(error)")
-            if let decodingError = error as? DecodingError {
-                print("Détails : \(decodingError)")
+                countries = geoJSON.features.compactMap { feature -> Country? in
+                    guard let name = feature.properties.name else {
+                        return nil
+                    }
+                    
+                    let isoA2 = feature.properties.isoA2
+                    let isoA3 = feature.properties.isoA3
+                    
+                    let id: String
+                    if let isoA2, isoA2 != "-99", !isoA2.isEmpty {
+                        id = isoA2
+                    } else {
+                        id = name
+                            .uppercased()
+                            .replacingOccurrences(of: " ", with: "_")
+                    }
+                    return Country(
+                        id: id,
+                        name: name,
+                        isoA3: (isoA3 != "-99") ? (isoA3 ?? "") : "",
+                        coordinates: feature.geometry.coordinates
+                    )
+                }
+                countries.sort { $0.name < $1.name }
+                
+                print("✅ \(countries.count) pays chargés avec succès")
+                if let norway = countries.first(where: { $0.name == "Norway" }) {
+                    print("🇳🇴 Norway chargé – id: \(norway.id)")
+                }
+                if let kosovo = countries.first(where: { $0.name == "Kosovo" }) {
+                    print("🇽🇰 Kosovo chargé – id: \(kosovo.id)")
+                }
+            } catch {
+                print("❌ Erreur de chargement du GeoJSON: \(error)")
+                if let decodingError = error as? DecodingError {
+                    print("Détails : \(decodingError)")
+                }
             }
         }
-    }
     
     public func getAllCountries() -> [Country] {
         return countries
