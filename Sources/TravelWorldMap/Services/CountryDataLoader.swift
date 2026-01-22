@@ -17,8 +17,8 @@ public final class CountryDataLoader: @unchecked Sendable {
     }
     
     private func loadCountries() {
-            guard let url = Bundle.main.url(forResource: "countries", withExtension: "geojson") else {
-                print("❌ Fichier countries.geojson non trouvé dans le bundle principal")
+            guard let url = Bundle.module.url(forResource: "countries", withExtension: "geojson") else {
+                print("❌ Fichier countries.geojson non trouvé dans le bundle du package")
                 return
             }
             
